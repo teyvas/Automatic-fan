@@ -1,0 +1,54 @@
+#include <DHT.h>
+
+// Define pins
+#define DHTPIN A0
+#define DHTTYPE DHT11
+#define ENCODER_CLK 2
+#define ENCODER_DT 3
+#define FAN_PIN 5
+
+DHT dht(DHTPIN, DHTTYPE);
+int thresholdTemp = 25;  // Default threshold temperature in Celsius
+int currentTemp = 0;
+int lastClkState;
+
+// Setup function
+void setup() {
+  pinMode(FAN_PIN, OUTPUT);
+  pinMode(ENCODER_CLK, INPUT);
+  pinMode(ENCODER_DT, INPUT);
+  Serial.begin(9600);
+  dht.begin();
+  lastClkState = digitalRead(ENCODER_CLK);
+}
+
+// Loop function
+void loop() {
+  // Read the temperature
+  currentTemp = dht.readTemperature();
+  
+  // Read the rotary encoder
+  int currentClkState = digitalRead(ENCODER_CLK);
+  if (currentClkState != lastClkState) {
+    if (digitalRead(ENCODER_DT) != currentClkState) {
+      thresholdTemp++;
+    } else {
+      thresholdTemp--;
+    }
+    Serial.print("Threshold Temp: ");
+    Serial.println(thresholdTemp);
+  }
+  lastClkState = currentClkState;
+
+  // Check if the current temperature exceeds the threshold
+  if (currentTemp >= thresholdTemp) {
+    digitalWrite(FAN_PIN, HIGH);  // Turn on the fan
+  } else {
+    digitalWrite(FAN_PIN, LOW);   // Turn off the fan
+  }
+
+  // Output the current temperature for debugging
+  Serial.print("Current Temp: ");
+  Serial.println(currentTemp);
+  delay(500);  // Small delay for stability
+}
