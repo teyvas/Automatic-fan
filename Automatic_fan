@@ -1,54 +1,52 @@
 #include <DHT.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
-// Define pins
-#define DHTPIN A0
+#define DHTPIN 2
 #define DHTTYPE DHT11
-#define ENCODER_CLK 2
-#define ENCODER_DT 3
-#define FAN_PIN 5
 
 DHT dht(DHTPIN, DHTTYPE);
-int thresholdTemp = 25;  // Default threshold temperature in Celsius
-int currentTemp = 0;
-int lastClkState;
 
-// Setup function
+const int potPin = A0;
+const int fanPin = 3; // Connect the fan to this pin
+
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address and dimensions
+
 void setup() {
-  pinMode(FAN_PIN, OUTPUT);
-  pinMode(ENCODER_CLK, INPUT);
-  pinMode(ENCODER_DT, INPUT);
-  Serial.begin(9600);
   dht.begin();
-  lastClkState = digitalRead(ENCODER_CLK);
+  pinMode(fanPin, OUTPUT);
+  lcd.init();                      // Initialize the LCD
+  lcd.backlight();                 // Turn on the backlight
+  lcd.setCursor(0, 0);
+  lcd.print("Temp Fan Control");
+  lcd.setCursor(0, 1);
+  delay(2000);
+  lcd.clear();
 }
 
-// Loop function
 void loop() {
-  // Read the temperature
-  currentTemp = dht.readTemperature();
-  
-  // Read the rotary encoder
-  int currentClkState = digitalRead(ENCODER_CLK);
-  if (currentClkState != lastClkState) {
-    if (digitalRead(ENCODER_DT) != currentClkState) {
-      thresholdTemp++;
-    } else {
-      thresholdTemp--;
-    }
-    Serial.print("Threshold Temp: ");
-    Serial.println(thresholdTemp);
-  }
-  lastClkState = currentClkState;
+  int threshold = map(analogRead(potPin), 0, 1023, 20, 40); // Map potentiometer value to temperature range
 
-  // Check if the current temperature exceeds the threshold
-  if (currentTemp >= thresholdTemp) {
-    digitalWrite(FAN_PIN, HIGH);  // Turn on the fan
+  float temperature = dht.readTemperature();
+
+  if (temperature > threshold) {
+    digitalWrite(fanPin, HIGH); // Turn on the fan
   } else {
-    digitalWrite(FAN_PIN, LOW);   // Turn off the fan
+    digitalWrite(fanPin, LOW); // Turn off the fan
   }
 
-  // Output the current temperature for debugging
-  Serial.print("Current Temp: ");
-  Serial.println(currentTemp);
-  delay(500);  // Small delay for stability
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Temp: ");
+  lcd.print(temperature);
+  lcd.print("C");
+
+  lcd.setCursor(0, 1);
+  lcd.print("Threshold: ");
+  lcd.print(threshold);
+  lcd.print("C");
+
+  delay(1000);
 }
+
+
