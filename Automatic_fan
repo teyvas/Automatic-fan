@@ -8,18 +8,17 @@
 DHT dht(DHTPIN, DHTTYPE);
 
 const int potPin = A0;
-const int fanPin = 3; // Connect the fan to this pin
+const int relayPin = 3; // Connect the relay module to this pin
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD address and dimensions
 
 void setup() {
   dht.begin();
-  pinMode(fanPin, OUTPUT);
-  lcd.init();                      // Initialize the LCD
-  lcd.backlight();                 // Turn on the backlight
+  pinMode(relayPin, OUTPUT); // Set the relay pin as output
+  lcd.init();                // Initialize the LCD
+  lcd.backlight();           // Turn on the backlight
   lcd.setCursor(0, 0);
   lcd.print("Temp Fan Control");
-  lcd.setCursor(0, 1);
   delay(2000);
   lcd.clear();
 }
@@ -30,9 +29,9 @@ void loop() {
   float temperature = dht.readTemperature();
 
   if (temperature > threshold) {
-    digitalWrite(fanPin, HIGH); // Turn on the fan
+    digitalWrite(relayPin, HIGH); // Turn on the relay (activates DC motor fan)
   } else {
-    digitalWrite(fanPin, LOW); // Turn off the fan
+    digitalWrite(relayPin, LOW);  // Turn off the relay
   }
 
   lcd.clear();
@@ -48,5 +47,3 @@ void loop() {
 
   delay(1000);
 }
-
-
